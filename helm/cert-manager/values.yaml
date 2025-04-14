@@ -1,0 +1,19 @@
+cert-manager:
+  crds:
+    enabled: true
+
+clusterIssuerHTTP01:
+  name: letsencrypt-http01
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: emil+kumpankurs@btlcomputing.com
+    privateKeySecretRef:
+      name: letsencrypt-http01
+
+clusterIssuerDNS01:
+  name: letsencrypt-dns01
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: emil+kumpankurs@btlcomputing.com
+    privateKeySecretRef:
+      name: letsencrypt-dns01

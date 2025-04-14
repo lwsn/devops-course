@@ -1,0 +1,33 @@
+external-dns:
+  serviceAccount:
+    create: true
+    name: "external-dns"
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::289831833738:role/external-dns-pod-role"
+
+  provider: 
+    name: "aws"
+  policy: "sync"
+  txtOwnerId: "kumpan-course"
+  
+  domainFilters: 
+    - "kumpan.btlc.dev"
+  zoneIdFilters:
+    - "Z07956813NT4K8VBET8LU"
+
+  sources:
+    - service
+    - ingress
+
+  extraArgs:
+    - --aws-zone-type=public
+
+  interval: "1m"
+  logLevel: "debug"
+
+  resources:
+    limits:
+      memory: "128Mi"
+    requests:
+      cpu: "50m"
+      memory: "64Mi"

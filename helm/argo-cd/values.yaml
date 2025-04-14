@@ -1,0 +1,49 @@
+argo-cd:
+  global:
+    domain: argocd.kumpan.btlc.dev
+  server:
+    # Enable high availability
+    ha:
+      enabled: true
+
+    # Configure ingress
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      tls: true
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: argocd.kumpan.btlc.dev
+        cert-manager.io/cluster-issuer: letsencrypt-dns01
+        nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+
+  # Configure RBAC
+  rbac:
+    create: true
+    pspEnabled: false
+
+  # Configure repository credentials
+  repoServer:
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 5
+
+  # Configure application controller
+  controller:
+    replicas: 2
+    resources:
+      requests:
+        memory: 256Mi
+
+  # Configure Redis
+  redis:
+    enabled: true
+    persistence:
+      enabled: true
+      size: 1Gi
+
+  # Configure metrics
+  metrics:
+    enabled: false
+    serviceMonitor:
+      enabled: false

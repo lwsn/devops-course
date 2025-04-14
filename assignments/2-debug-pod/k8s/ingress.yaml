@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: assignment2-ingress
+  namespace: YOUR-NAMESPACE-HERE
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-dns01"
+    external-dns.alpha.kubernetes.io/hostname: "YOUR-NAMESPACE-HERE.a2.kumpan.btlc.dev"
+spec:
+  ingressClassName: "nginx"
+  tls:
+  - hosts:
+    - YOUR-NAMESPACE-HERE.a2.kumpan.btlc.dev
+    secretName: assignment2-tls
+  rules:
+  - host: YOUR-NAMESPACE-HERE.a2.kumpan.btlc.dev
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: assignment2-service
+            port:
+              number: 80

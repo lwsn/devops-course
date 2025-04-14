@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: introduction-presentation-ingress
+  namespace: presentations
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-dns01"
+    external-dns.alpha.kubernetes.io/hostname: "1.presentations.kumpan.btlc.dev"
+spec:
+  ingressClassName: "nginx"
+  tls:
+  - hosts:
+    - 1.presentations.kumpan.btlc.dev
+    secretName: introduction-presentation-tls
+  rules:
+  - host: 1.presentations.kumpan.btlc.dev
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: introduction-presentation-service
+            port:
+              number: 80

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: assignment2-service
+  namespace: YOUR-NAMESPACE-HERE
+spec:
+  selector:
+    app: assignment2
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP

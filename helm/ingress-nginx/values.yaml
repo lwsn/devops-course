@@ -1,0 +1,41 @@
+ingress-nginx:
+  controller:
+    extraArgs: {}
+    config:
+      use-proxy-protocol: "true" # Enable Proxy Protocol
+      real-ip-header: "proxy_protocol" # Extract client IP
+      set-real-ip-from: "172.31.0.0/16" # VPC CIDR range
+    allowSnippetAnnotations: true
+    resources:
+      requests:
+        memory: 250Mi
+        cpu: 250m
+      limits:
+        memory: 500Mi
+        cpu: 500m
+    metrics:
+      enabled: false
+      serviceMonitor:
+        enabled: false
+    service:
+      type: LoadBalancer
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-type: "nlb" # Use NLB
+        service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing" # External LB
+        service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+        service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: '*'
+        service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance # Use instance targets
+        service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: proxy_protocol_v2.enabled=true
+
+
+
+  defaultBackend:
+    enabled: true
+    resources:
+      requests:
+        memory: 50Mi
+        cpu: 100m
+      limits:
+        memory: 100Mi
+        cpu: 150m
+

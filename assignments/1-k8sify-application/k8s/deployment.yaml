@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: assignment1-app
+  namespace: YOUR-NAME-HERE
+  labels:
+    app: assignment1-app
+spec:
+  # Set the number of replicas to test scaling behavior
+  replicas: 1
+  selector:
+    matchLabels:
+      app: assignment1-app
+  template:
+    metadata:
+      labels:
+        app: assignment1-app
+    spec:
+      containers:
+      - name: assignment1-app
+        # Replace with your ECR image. Format:
+        image: 289831833738.dkr.ecr.eu-north-1.amazonaws.com/assignment1/YOUR-NAME-HERE:latest
+        ports:
+        - containerPort: 3000
+
+        # Resource configuration:
+        # Note: Setting CPU limit to 0.2 will help demonstrate resource starvation
+        # and the impact of scaling when under load
+        # resources:
+        #   requests:
+        #     memory: "128Mi"
+        #     cpu: "0.1"
+        #   limits:
+        #     memory: "256Mi"
+        #     cpu: "0.2"
+
+        # Add readiness probe to ensure the pod is ready to receive traffic
+        # readinessProbe:
+        #   httpGet:
+        #     path: /ready
+        #     port: 3000
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 10
+
+        # Add liveness probe to ensure the application is healthy
+        # livenessProbe:
+        #   httpGet:
+        #     path: /health
+        #     port: 3000
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 20

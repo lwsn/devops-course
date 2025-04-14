@@ -1,0 +1,39 @@
+postgresql:
+  architecture: standalone
+  auth:
+    postgresPassword: changeme1234
+    database: postgres
+    username: postgres
+
+  primary:
+    persistence:
+      enabled: true
+      size: 2Gi
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+      limits:
+        memory: 512Mi
+    service:
+      type: ClusterIP
+      port: 5432
+
+
+  serviceAccount:
+    create: true
+    name: ""
+
+  metrics:
+    enabled: false
+
+  volumePermissions:
+    enabled: false
+
+  global:
+    postgresql:
+      auth:
+        postgresPassword: changeme1234
+        database: postgres
+        username: postgres
+    defaultStorageClass: gp2
