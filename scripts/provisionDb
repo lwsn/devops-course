@@ -2,32 +2,32 @@
 set -e
 
 # Check if PostgreSQL client is installed
-if ! command -v psql &> /dev/null; then
-    echo "Error: PostgreSQL client (psql) is not installed."
-    echo "Please install it using: sudo apt-get install postgresql-client"
-    exit 1
+if ! command -v psql &>/dev/null; then
+	echo "Error: PostgreSQL client (psql) is not installed."
+	echo "Please install it using: sudo apt-get install postgresql-client"
+	exit 1
 fi
 
 # Check if username is provided
 if [ $# -ne 1 ]; then
-    echo "Usage: $0 <username>"
-    echo "Example: $0 myapp"
-    exit 1
+	echo "Usage: $0 <username>"
+	echo "Example: $0 myapp"
+	exit 1
 fi
 
 # Generate a random 10-character alphanumeric password
 generate_password() {
-    tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 10
+	tr -dc 'a-zA-Z0-9' </dev/urandom | head -c 10
 }
 
 # Create a new user, database, and grant privileges
 create_db_and_user() {
-    local username=$1
-    local password=$2
-    local dbname=$3
+	local username=$1
+	local password=$2
+	local dbname=$3
 
-    # Connect to PostgreSQL and create user, database, and grant privileges
-    psql -h localhost -U postgres << EOF
+	# Connect to PostgreSQL and create user, database, and grant privileges
+	psql -h localhost -U lwsn <<EOF
 CREATE USER $username WITH PASSWORD '$password';
 CREATE DATABASE $dbname OWNER $username;
 GRANT ALL PRIVILEGES ON DATABASE $dbname TO $username;
@@ -35,43 +35,43 @@ GRANT ALL PRIVILEGES ON DATABASE $dbname TO $username;
 GRANT ALL ON SCHEMA public TO $username;
 EOF
 
-    echo "Created user: $username"
-    echo "Created database: $dbname"
-    echo "Password: $password"
+	echo "Created user: $username"
+	echo "Created database: $dbname"
+	echo "Password: $password"
 }
 
 # Append credentials to CSV file
 append_to_csv() {
-    local username=$1
-    local password=$2
-    local dbname=$3
+	local username=$1
+	local password=$2
+	local dbname=$3
 
-    # Create CSV file if it doesn't exist
-    if [ ! -f "dbs.csv" ]; then
-        echo "username,password,database" > dbs.csv
-    fi
+	# Create CSV file if it doesn't exist
+	if [ ! -f "dbs.csv" ]; then
+		echo "username,password,database" >dbs.csv
+	fi
 
-    # Append credentials to CSV file
-    echo "$username,$password,$dbname" >> dbs.csv
-    echo "Credentials appended to dbs.csv"
+	# Append credentials to CSV file
+	echo "$username,$password,$dbname" >>dbs.csv
+	echo "Credentials appended to dbs.csv"
 }
 
 # Main function
 main() {
-    # Get username from command line argument
-    local username=$1
-    local password=$(generate_password)
-    local dbname=$username
+	# Get username from command line argument
+	local username=$1
+	local password=lwsn
+	local dbname=$username
 
-    # Create database and user
-    create_db_and_user "$username" "$password" "$dbname"
+	# Create database and user
+	create_db_and_user "$username" "$password" "$dbname"
 
-    # Append credentials to CSV file
-    append_to_csv "$username" "$password" "$dbname"
+	# Append credentials to CSV file
+	append_to_csv "$username" "$password" "$dbname"
 
-    echo ""
-    echo "Database provisioning completed successfully!"
-    echo "Connection string: postgresql://$username:$password@localhost:5432/$dbname"
+	echo ""
+	echo "Database provisioning completed successfully!"
+	echo "Connection string: postgresql://$username:$password@localhost:5432/$dbname"
 }
 
 # Run the main function with the provided username

@@ -1,9 +1,9 @@
-import express, { Request, Response } from 'express';
-import rateLimit from 'express-rate-limit';
-import { Pool, QueryResult } from 'pg';
-import fs from 'fs';
-import path from 'path';
-import dotenv from 'dotenv';
+import express, { Request, Response } from "express";
+import rateLimit from "express-rate-limit";
+import { Pool, QueryResult } from "pg";
+import fs from "fs";
+import path from "path";
+import dotenv from "dotenv";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -14,14 +14,17 @@ const port = process.env.PORT || 8080;
 // Create a rate limiter that allows 10 requests per minute
 const limiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 10, // 10 requests per minute
+  max: 60, // 10 requests per minute
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  message: 'Too many requests, please try again later.',
+  message: "Too many requests, please try again later.",
+  skip: (req) => ["::ffff:172.31.91.132"].includes(req.ip || ""),
   handler: (req, res) => {
     console.error(`Rate limit exceeded for IP: ${req.ip} on path: ${req.path}`);
-    res.status(429).json({ error: 'Too many requests, please try again later.' });
-  }
+    res
+      .status(429)
+      .json({ error: "Too many requests, please try again later." });
+  },
 });
 
 // Apply rate limiter to all routes
@@ -31,51 +34,60 @@ app.use(limiter);
 let pool: Pool | null = null;
 try {
   pool = new Pool({
-    connectionString: process.env.DATABASE_URL
+    connectionString: process.env.DATABASE_URL,
   });
-  console.log('Database connection established');
+  console.log("Database connection established");
 } catch (error) {
-  console.error('Failed to connect to database:', error instanceof Error ? error.message : String(error));
+  console.error(
+    "Failed to connect to database:",
+    error instanceof Error ? error.message : String(error),
+  );
 }
 
 // Health check endpoint
-app.get('/healthz', (_req: Request, res: Response) => {
-  res.status(200).send('OK');
+app.get("/healthz", (_req: Request, res: Response) => {
+  res.status(200).send("OK");
 });
 
 // Liveness probe endpoint
-app.get('/livez', (_req: Request, res: Response) => {
-  res.status(200).send('OK');
+app.get("/livez", (_req: Request, res: Response) => {
+  res.status(200).send("OK");
 });
 
 // Main endpoint
-app.get('/', (_req: Request, res: Response) => {
-  res.send('Hello from the debug pod application! Try accessing <a href="/greeting">/greeting</a> to see a message from the database.');
+app.get("/", (_req: Request, res: Response) => {
+  res.send(
+    'Hello from the debug pod application! Try accessing <a href="/greeting">/greeting</a> to see a message from the database.',
+  );
 });
 
-
 // Greeting endpoint - fetches the greeting from the database
-app.get('/greeting', async (_req: Request, res: Response) => {
+app.get("/greeting", async (_req: Request, res: Response) => {
   if (!pool) {
-    return res.status(500).send('Database connection not established');
+    return res.status(500).send("Database connection not established");
   }
 
   try {
-    const result: QueryResult = await pool.query('SELECT value FROM assignment2 WHERE key = $1', ['greeting']);
+    const result: QueryResult = await pool.query(
+      "SELECT value FROM assignment2 WHERE key = $1",
+      ["greeting"],
+    );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Greeting not found in database' });
+      return res.status(404).json({ error: "Greeting not found in database" });
     }
 
     res.json({ greeting: result.rows[0].value });
   } catch (error) {
-    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    res
+      .status(500)
+      .json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
 // Download endpoint - redirects to a specific file
-app.get('/download', (_req: Request, res: Response) => {
-  const downloadsDir = path.join(__dirname, '..', 'downloads');
+app.get("/download", (_req: Request, res: Response) => {
+  const downloadsDir = path.join(__dirname, "..", "downloads");
 
   // Check if the downloads directory exists
   if (!fs.existsSync(downloadsDir)) {
@@ -87,7 +99,7 @@ app.get('/download', (_req: Request, res: Response) => {
     const files = fs.readdirSync(downloadsDir);
 
     if (files.length === 0) {
-      return res.status(200).json({ message: 'empty' });
+      return res.status(200).json({ message: "empty" });
     }
 
     const randomFile = files[Math.floor(Math.random() * files.length)];
@@ -95,14 +107,17 @@ app.get('/download', (_req: Request, res: Response) => {
     // Redirect to the specific file path
     res.redirect(302, `/download/${randomFile}`);
   } catch (error) {
-    console.error('Error reading downloads directory:', error instanceof Error ? error.message : String(error));
-    res.status(500).json({ error: 'Failed to read downloads directory' });
+    console.error(
+      "Error reading downloads directory:",
+      error instanceof Error ? error.message : String(error),
+    );
+    res.status(500).json({ error: "Failed to read downloads directory" });
   }
 });
 
 // Specific file download endpoint
-app.get('/download/:filename', (req: Request, res: Response) => {
-  const downloadsDir = path.join(__dirname, '..', 'downloads');
+app.get("/download/:filename", (req: Request, res: Response) => {
+  const downloadsDir = path.join(__dirname, "..", "downloads");
 
   // Check if the downloads directory exists
   if (!fs.existsSync(downloadsDir)) {
@@ -116,7 +131,7 @@ app.get('/download/:filename', (req: Request, res: Response) => {
 
     // Check if the file exists
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'File not found' });
+      return res.status(404).json({ error: "File not found" });
     }
 
     // Get file stats
@@ -124,25 +139,25 @@ app.get('/download/:filename', (req: Request, res: Response) => {
 
     // Determine the correct MIME type based on file extension
     const ext = path.extname(filename).toLowerCase();
-    let contentType = 'application/octet-stream';
+    let contentType = "application/octet-stream";
 
     // Map common extensions to MIME types
     const mimeTypes: Record<string, string> = {
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.png': 'image/png',
-      '.gif': 'image/gif',
-      '.svg': 'image/svg+xml',
-      '.pdf': 'application/pdf',
-      '.txt': 'text/plain',
-      '.html': 'text/html',
-      '.css': 'text/css',
-      '.js': 'application/javascript',
-      '.json': 'application/json',
-      '.xml': 'application/xml',
-      '.zip': 'application/zip',
-      '.tar': 'application/x-tar',
-      '.gz': 'application/gzip'
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".gif": "image/gif",
+      ".svg": "image/svg+xml",
+      ".pdf": "application/pdf",
+      ".txt": "text/plain",
+      ".html": "text/html",
+      ".css": "text/css",
+      ".js": "application/javascript",
+      ".json": "application/json",
+      ".xml": "application/xml",
+      ".zip": "application/zip",
+      ".tar": "application/x-tar",
+      ".gz": "application/gzip",
     };
 
     if (mimeTypes[ext]) {
@@ -150,27 +165,36 @@ app.get('/download/:filename', (req: Request, res: Response) => {
     }
 
     // Set appropriate headers
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Length', stats.size);
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Length", stats.size);
+    res.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate",
+    );
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
 
     // Stream the file to the response
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
 
     // Handle errors in the stream
-    fileStream.on('error', (error) => {
-      console.error(`Error streaming file ${filename}:`, error instanceof Error ? error.message : String(error));
+    fileStream.on("error", (error) => {
+      console.error(
+        `Error streaming file ${filename}:`,
+        error instanceof Error ? error.message : String(error),
+      );
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Failed to stream file' });
+        res.status(500).json({ error: "Failed to stream file" });
       }
     });
   } catch (error) {
-    console.error('Error reading file:', error instanceof Error ? error.message : String(error));
-    res.status(500).json({ error: 'Failed to read file' });
+    console.error(
+      "Error reading file:",
+      error instanceof Error ? error.message : String(error),
+    );
+    res.status(500).json({ error: "Failed to read file" });
   }
 });
 

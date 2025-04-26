@@ -1,33 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: assignment1-app
+  name: assignment3-app
   namespace: lwsn
   labels:
-    app: assignment1-app
+    app: assignment3-app
 spec:
   # Set the number of replicas to test scaling behavior
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: assignment1-app
+      app: assignment3-app
   template:
     metadata:
       labels:
-        app: assignment1-app
+        app: assignment3-app
     spec:
       containers:
-        - name: assignment1-app
+        - name: assignment3-app
           # Replace with your ECR image. Format:
-          image: 289831833738.dkr.ecr.eu-north-1.amazonaws.com/assignment1/lwsn:latest
+          image: 289831833738.dkr.ecr.eu-north-1.amazonaws.com/assignment3/lwsn:latest
           ports:
-            - containerPort: 3000
+            - containerPort: 8000
           env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: assignment1
-                  key: DATABASE_URL
+            - name: PORT
+              value: "8000"
 
           # Resource configuration:
           # Note: Setting CPU limit to 0.2 will help demonstrate resource starvation
@@ -44,7 +41,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /ready
-              port: 3000
+              port: 8000
             initialDelaySeconds: 5
             periodSeconds: 10
 
@@ -52,6 +49,6 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 3000
+              port: 8000
             initialDelaySeconds: 15
             periodSeconds: 20

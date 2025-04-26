@@ -5,11 +5,10 @@ services:
     build:
       context: ./app
       dockerfile: Dockerfile
-    platform: linux/amd64
     ports:
-      - "3000:3000"
+      - "8000:8000"
     environment:
-      - PORT=3000
+      - PORT=8000
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s

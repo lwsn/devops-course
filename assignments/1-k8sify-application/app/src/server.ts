@@ -1,13 +1,15 @@
-import express, { Request, Response } from 'express';
-import { Pool, QueryResult } from 'pg';
-import dotenv from 'dotenv';
+import express, { Request, Response } from "express";
+import { Pool, QueryResult } from "pg";
+import dotenv from "dotenv";
 
 // Load environment variables from .env file
 dotenv.config();
 
 // Check if DATABASE_URL is set
 if (!process.env.DATABASE_URL) {
-  console.warn('\x1b[33mWarning: DATABASE_URL environment variable is not set. Please check .env.example for the required format.\x1b[0m');
+  console.warn(
+    "\x1b[33mWarning: DATABASE_URL environment variable is not set. Please check .env.example for the required format.\x1b[0m",
+  );
 }
 
 const app = express();
@@ -16,7 +18,7 @@ const port = process.env.PORT || 3000;
 // PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: false,
 });
 
 // Function to check if a number is prime
@@ -46,7 +48,11 @@ interface PrimeCacheResult {
 }
 
 // Function to check if the database is properly set up
-const checkDatabaseSetup = async (): Promise<{ isConnected: boolean; hasTable: boolean; error?: string }> => {
+const checkDatabaseSetup = async (): Promise<{
+  isConnected: boolean;
+  hasTable: boolean;
+  error?: string;
+}> => {
   try {
     // Try to connect to the database
     const client = await pool.connect();
@@ -64,24 +70,27 @@ const checkDatabaseSetup = async (): Promise<{ isConnected: boolean; hasTable: b
 
       return {
         isConnected: true,
-        hasTable
+        hasTable,
       };
     } finally {
       // Always release the client back to the pool
       client.release();
     }
   } catch (error) {
-    console.error('Database connection error:', error);
+    console.error("Database connection error:", error);
     return {
       isConnected: false,
       hasTable: false,
-      error: error instanceof Error ? error.message : 'Unknown database error'
+      error: error instanceof Error ? error.message : "Unknown database error",
     };
   }
 };
 
 // Function to get cached result or calculate and cache
-const getPrimeCount = async (n: number, useCache: boolean): Promise<{ primeCount?: number; error?: string }> => {
+const getPrimeCount = async (
+  n: number,
+  useCache: boolean,
+): Promise<{ primeCount?: number; error?: string }> => {
   if (!useCache) {
     return { primeCount: countPrimes(n) };
   }
@@ -91,21 +100,22 @@ const getPrimeCount = async (n: number, useCache: boolean): Promise<{ primeCount
 
   if (!dbStatus.isConnected) {
     return {
-      error: `Database connection failed: ${dbStatus.error}. Please check your database configuration.`
+      error: `Database connection failed: ${dbStatus.error}. Please check your database configuration.`,
     };
   }
 
   if (!dbStatus.hasTable) {
     return {
-      error: 'Database connection successful, but the prime_cache table does not exist. Please create the table manually with the following SQL:\n\nCREATE TABLE prime_cache (\n  number INTEGER PRIMARY KEY,\n  prime_count INTEGER NOT NULL\n);'
+      error:
+        "Database connection successful, but the prime_cache table does not exist. Please create the table manually with the following SQL:\n\nCREATE TABLE prime_cache (\n  number INTEGER PRIMARY KEY,\n  prime_count INTEGER NOT NULL\n);",
     };
   }
 
   try {
     // Check if result is in cache
     const result: QueryResult<PrimeCacheResult> = await pool.query(
-      'SELECT prime_count FROM prime_cache WHERE number = $1',
-      [n]
+      "SELECT prime_count FROM prime_cache WHERE number = $1",
+      [n],
     );
 
     if (result.rows.length > 0) {
@@ -118,45 +128,47 @@ const getPrimeCount = async (n: number, useCache: boolean): Promise<{ primeCount
     const primeCount = countPrimes(n);
 
     await pool.query(
-      'INSERT INTO prime_cache (number, prime_count) VALUES ($1, $2)',
-      [n, primeCount]
+      "INSERT INTO prime_cache (number, prime_count) VALUES ($1, $2)",
+      [n, primeCount],
     );
 
     return { primeCount };
   } catch (error) {
-    console.error('Database error:', error);
+    console.error("Database error:", error);
     return {
-      error: `Database error: ${error instanceof Error ? error.message : 'Unknown error'}.`
+      error: `Database error: ${error instanceof Error ? error.message : "Unknown error"}.`,
     };
   }
 };
 
 // Health check endpoint
-app.get('/health', (_req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok' });
+app.get("/health", (_req: Request, res: Response) => {
+  res.status(200).json({ status: "ok" });
 });
 
 // Readiness probe endpoint
-app.get('/ready', (_req: Request, res: Response) => {
-  res.status(200).json({ status: 'ready' });
+app.get("/ready", (_req: Request, res: Response) => {
+  res.status(200).json({ status: "ready" });
 });
 
 // Main endpoint
-app.get('/', (_req: Request, res: Response) => {
+app.get("/", (_req: Request, res: Response) => {
   res.json({
-    message: 'Hello from Assignment 1 App!',
+    message: "Hello from Assignment 1 App!",
     timestamp: new Date().toISOString(),
-    hostname: process.env.HOSTNAME || 'unknown'
+    hostname: process.env.HOSTNAME || "unknown",
   });
 });
 
 // Prime number calculation endpoint
-app.get('/primes/:number', async (req: Request, res: Response) => {
+app.get("/primes/:number", async (req: Request, res: Response) => {
   const number = parseInt(req.params.number, 10);
-  const useCache = req.query.useCache === 'true';
+  const useCache = req.query.useCache === "true";
 
   if (isNaN(number) || number < 1) {
-    return res.status(400).json({ error: 'Please provide a valid positive number' });
+    return res
+      .status(400)
+      .json({ error: "Please provide a valid positive number" });
   }
 
   try {
@@ -171,7 +183,7 @@ app.get('/primes/:number', async (req: Request, res: Response) => {
         number,
         useCache,
         calculationTime: `${endTime - startTime}ms`,
-        hostname: process.env.HOSTNAME || 'unknown'
+        hostname: process.env.HOSTNAME || "unknown",
       });
     }
 
@@ -181,12 +193,12 @@ app.get('/primes/:number', async (req: Request, res: Response) => {
       primeCount: result.primeCount,
       useCache,
       calculationTime: `${endTime - startTime}ms`,
-      hostname: process.env.HOSTNAME || 'unknown',
-      ...(result.error ? { warning: result.error } : {})
+      hostname: process.env.HOSTNAME || "unknown",
+      ...(result.error ? { warning: result.error } : {}),
     });
   } catch (error) {
-    console.error('Error calculating primes:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error calculating primes:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

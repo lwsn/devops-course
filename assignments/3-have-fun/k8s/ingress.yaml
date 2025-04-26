@@ -1,26 +1,26 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: assignment1-app
+  name: assignment3-app
   namespace: lwsn
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-dns01
     # Add external-dns annotation below:
-    external-dns.alpha.kubernetes.io/hostname: lwsn.a1.kumpan.btlc.dev
+    external-dns.alpha.kubernetes.io/hostname: lwsn.a3.kumpan.btlc.dev
 spec:
   tls:
     - hosts:
-        - lwsn.a1.kumpan.btlc.dev
-      secretName: assignment1-tls
+        - lwsn.a3.kumpan.btlc.dev
+      secretName: assignment3-tls
   rules:
-    - host: lwsn.a1.kumpan.btlc.dev
+    - host: lwsn.a3.kumpan.btlc.dev
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: assignment1-app
+                name: assignment3-app
                 port:
                   number: 80
